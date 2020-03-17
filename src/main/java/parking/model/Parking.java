@@ -20,10 +20,10 @@ public class Parking {
         this.countPlace = countPlace;
         cars = new Hashtable<>();
         tickets = new ArrayList<>();
-//        for (int i = 0; i < countPlace; i++) {
-//            int numbTicket = Integer.parseInt(RandomStringUtils.randomNumeric(3));
-//            tickets.add(new Ticket(numbTicket));//
-//        }
+        for (int i = 0; i < countPlace; i++) {
+            int numbTicket = Integer.parseInt(RandomStringUtils.randomNumeric(3));
+            tickets.add(new Ticket(numbTicket));
+        }
     }
 
     public void setTickets(List<Ticket> tickets) {
@@ -55,7 +55,7 @@ public class Parking {
     public synchronized void parkingEntrance(Car car) {
         if (countRemainingPlace() == 0) {
             try {
-                System.out.println("Извините,парковка заполнена.");
+//                System.out.println("Извините,парковка заполнена.");
                 wait();
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -64,8 +64,8 @@ public class Parking {
         Ticket t = tickets.get(tickets.size() - 1);
         cars.put(t, car);
         tickets.remove(t);
-        System.out.println("Машина " + car.getNumberCar() + " въехала на парковку  с билетом " + t.getNumberTicket());
-        notify();
+//        System.out.println("Машина " + car.getNumberCar() + " въехала на парковку  с билетом " + t.getNumberTicket());
+//        notify();
     }
 
     /**
@@ -83,10 +83,10 @@ public class Parking {
             tickets.add(ticketFind);
             Car car = cars.get(ticketFind);
             cars.remove(ticketFind);
-            System.out.println("Машина " + car.getNumberCar() + " выехала с парковки! Был билет: " + ticketFind.getNumberTicket());
+//            System.out.println("Машина " + car.getNumberCar() + " выехала с парковки! Был билет: " + ticketFind.getNumberTicket());
             notify();
         } else {
-            System.out.println("Нет машин с номером билета: " + numberTicket);
+            System.out.println("\nНет машин с номером билета: " + numberTicket);
         }
     }
 }

@@ -5,9 +5,6 @@ import parking.model.Car;
 import parking.model.Parking;
 
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class Main {
@@ -24,7 +21,7 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+//        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
 //        List<Car> cars = new ArrayList<>();
 
         Timer timer = new Timer();
@@ -70,41 +67,60 @@ public class Main {
                     help();
                     continue;
                 case "p":
-                    for (int i = 0; i < Integer.parseInt(valueTicket); i++) {
+                    try {
+                        int tmp = Integer.parseInt(valueTicket);
 //                        service.schedule(() -> parking.parkingEntrance(getNewCar()), countSec, TimeUnit.SECONDS);
-                        //Планирование выполнения задачи
-                        timer.schedule(
-                                // //Задача на выполнение
-                                new TimerTask() {
-                                    @Override
-                                    public void run() {
-                                        try {
-                                            TimeUnit.SECONDS.sleep(countSec);
-                                            parking.parkingEntrance(getNewCar());
-                                        } catch (InterruptedException e) {
-                                            System.err.println("Задача прервана. error= ");
-                                            e.printStackTrace();
+                            //Планирование выполнения задачи
+                            timer.schedule(
+                                    // //Задача на выполнение
+                                    new TimerTask() {
+                                        @Override
+                                        public void run() {
+                                            try {
+                                                for (int i = 0; i < tmp; i++){
+                                                    TimeUnit.SECONDS.sleep(countSec);
+                                                    parking.parkingEntrance(getNewCar());
+                                                }
+
+                                            } catch (InterruptedException e) {
+                                                System.err.println("Задача прервана. error= ");
+                                                e.printStackTrace();
+                                            }
                                         }
-
-                                    }
-                                }, 0); //сначала задержка на countSec, а потом выполнение задачи
+                                    }, 0); //сначала задержка на countSec, а потом выполнение задачи
+                    } catch (NumberFormatException e) {
+                        System.out.println("Некорректный ввод количества въехжающих машин!");
+                    } finally {
+                        continue;
                     }
-                    continue;
                 case "u":
-                    String[] v = (valueTicket.substring(1, valueTicket.length() - 1)).split(",");
-                    //если перечисление, то выезжают несколько машин, иначе - одна
-                    if (v.length > 1) {
-
-                        for (String s : v) {
-                            Thread thread = new Thread(() -> parking.parkingExit(Integer.parseInt(s)));
+                    try {
+                        String[] v = (valueTicket.substring(1, valueTicket.length() - 1)).split(",");
+                        //если перечисление, то выезжают несколько машин, иначе - одна
+                        if (v.length > 1) {
+                            for (String s : v) {
+                                int tmpNumberTicket = Integer.parseInt(s);
+                                Thread thread = new Thread(() -> parking.parkingExit(tmpNumberTicket));
+                                thread.start();
+//                                timer.schedule(
+//                                        // //Задача на выполнение
+//                                        new TimerTask() {
+//                                            @Override
+//                                            public void run() {
+//                                                parking.parkingExit(tmpNumberTicket);
+//                                            }
+//                                        }, 0);
+                            }
+                        } else {
+                            int vt = Integer.parseInt(valueTicket);
+                            Thread thread = new Thread(() -> parking.parkingExit(vt));
                             thread.start();
                         }
-                    } else {
-                        int vt = Integer.parseInt(valueTicket);
-                        Thread thread = new Thread(() -> parking.parkingExit(vt));
-                        thread.start();
+                    } catch (Exception ex) {
+                        System.out.println("Некорректный ввод номера билета машины!");
+                    } finally {
+                        continue;
                     }
-                    continue;
                 case "e":
                     System.out.println("Программа завершила работу!");
                     System.exit(0);
@@ -138,5 +154,14 @@ public class Main {
         System.out.println(ANSI_RED + "l" + ANSI_RESET + " - СПИСОК МАШИН.");
         System.out.println(ANSI_RED + "c" + ANSI_RESET + " - УЗНАТЬ КОЛИЧЕСТВО ОСТАВШИХСЯ МЕСТ НА ПАРКОВКЕ.");
         System.out.println(ANSI_RED + "e" + ANSI_RESET + "- ВЫХОД ИЗ ПРИЛОЖЕНИЯ");
+    }
+
+    /*Преобразование в int*/
+    private static Integer tryParsInt(String number) {
+        try {
+            return Integer.parseInt(number);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 }
