@@ -6,6 +6,8 @@ import parking.model.Parking;
 import parking.model.Ticket;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Main {
     /*Цвета для вывода текста*/
@@ -20,10 +22,8 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-//        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
-//        List<Car> cars = new ArrayList<>();
-
-        Timer timer = new Timer();
+        ExecutorService serviceEnter = Executors.newFixedThreadPool(2);
+        ExecutorService serviceExit = Executors.newFixedThreadPool(2);
 
         while (true) {
             System.out.print("Введите количество мест на парковке: ");
@@ -69,13 +69,12 @@ public class Main {
                     try {
                         for (int i = 0; i < Integer.parseInt(valueTicket); i++) {
                             if (parking.countRemainingPlace() != 0) {
-                                Thread thread = new Thread(() -> {
+                                serviceEnter.submit(() -> {
                                     boolean tr = parking.parkingEntrance(getNewCar());
                                     if (!tr) {
                                         System.out.println("Извините,парковка заполнена.");
                                     }
                                 });
-                                thread.start();
                             } else {
                                 System.out.println("Извините,парковка заполнена.");
                             }
@@ -96,8 +95,10 @@ public class Main {
                                 Ticket ticketFind = parking.checkedTicket(tmpNumberTicket);
                                 if (ticketFind != null) {
                                     //создать поток
-                                    Thread thread = new Thread(() -> parking.parkingExit(ticketFind));
-                                    thread.start();
+                                    serviceExit.submit(() -> {
+                                        parking.parkingExit(ticketFind);
+                                    });
+
                                 } else {
                                     System.out.println("\nНет машин с номером билета: " + tmpNumberTicket);
                                 }
@@ -107,8 +108,7 @@ public class Main {
                             //проверить номер билета
                             Ticket ticketFind = parking.checkedTicket(vt);
                             if (ticketFind != null) {
-                                Thread thread = new Thread(() -> parking.parkingExit(ticketFind));
-                                thread.start();
+                                serviceExit.submit(() -> parking.parkingExit(ticketFind));
                             } else {
                                 System.out.println("\nНет машин с номером билета: " + vt);
                             }
@@ -120,6 +120,7 @@ public class Main {
                     }
                 case "e":
                     System.out.println("Программа завершила работу!");
+                    serviceEnter.shutdown();
                     System.exit(0);
                     break;
                 default:

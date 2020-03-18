@@ -65,6 +65,7 @@ public class Parking {
                 Ticket t = tickets.get(tickets.size() - 1);
                 tickets.remove(t);
                 cars.put(t, car);
+//                System.out.println("Car " + car.getNumberCar() + " enter, get ticket " + t.getNumberTicket());
                 TimeUnit.SECONDS.sleep(countSec);
             } catch (InterruptedException e) {
                 System.err.println("Задача прервана. error= ");
@@ -82,6 +83,7 @@ public class Parking {
     public void parkingExit(Ticket ticket) {
         tickets.add(ticket);
         cars.remove(ticket);
+//        System.out.println("Car exit, the ticket number was " + ticket.getNumberTicket());
     }
 
     /**
