@@ -2,11 +2,9 @@ package parking.model;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class Parking {
     //кол-во мест
@@ -14,20 +12,27 @@ public class Parking {
     //список машин
     private Hashtable<Ticket, Car> cars;
     //список билетов
-    private List<Ticket> tickets;
+    private Vector<Ticket> tickets;
+    //Время въезда машины на парковку
+    private long countSec;
 
-    public Parking(int countPlace) {
+    public Parking(int countPlace, long countSec) {
         this.countPlace = countPlace;
+        this.countSec = countSec;
         cars = new Hashtable<>();
-        tickets = new ArrayList<>();
+        tickets = new Vector<>();
         for (int i = 0; i < countPlace; i++) {
             int numbTicket = Integer.parseInt(RandomStringUtils.randomNumeric(3));
             tickets.add(new Ticket(numbTicket));
         }
     }
 
-    public void setTickets(List<Ticket> tickets) {
+    public void setTickets(Vector<Ticket> tickets) {
         this.tickets = tickets;
+    }
+
+    public Vector<Ticket> getTickets() {
+        return tickets;
     }
 
     public void getCarsPrint() {
@@ -44,7 +49,9 @@ public class Parking {
         return cars;
     }
 
-    //кол-во оставшихся мест на парковке
+    /**
+     * кол-во оставшихся мест на парковке
+     */
     public int countRemainingPlace() {
         return countPlace - cars.size();
     }
@@ -52,41 +59,41 @@ public class Parking {
     /**
      * Въезд на парковку
      */
-    public synchronized void parkingEntrance(Car car) {
-        if (countRemainingPlace() == 0) {
+    public synchronized boolean parkingEntrance(Car car) {
+        if (countRemainingPlace() != 0) {
             try {
-//                System.out.println("Извините,парковка заполнена.");
-                wait();
+                Ticket t = tickets.get(tickets.size() - 1);
+                tickets.remove(t);
+                cars.put(t, car);
+                TimeUnit.SECONDS.sleep(countSec);
             } catch (InterruptedException e) {
+                System.err.println("Задача прервана. error= ");
                 e.printStackTrace();
             }
+            return true;
+        } else {
+            return false;
         }
-        Ticket t = tickets.get(tickets.size() - 1);
-        cars.put(t, car);
-        tickets.remove(t);
-//        System.out.println("Машина " + car.getNumberCar() + " въехала на парковку  с билетом " + t.getNumberTicket());
-//        notify();
     }
 
     /**
      * Выезд с парковки
      */
-    public synchronized void parkingExit(int numberTicket) {
+    public void parkingExit(Ticket ticket) {
+        tickets.add(ticket);
+        cars.remove(ticket);
+    }
+
+    /**
+     * проверка номера билета
+     */
+    public Ticket checkedTicket(int numberTicket) {
         Set<Ticket> ticketsTmp = cars.keySet();
-        Ticket ticketFind = null;
         for (Ticket t : ticketsTmp) {
             if (t.getNumberTicket() == numberTicket) {
-                ticketFind = t;
+                return t;
             }
         }
-        if (ticketFind != null) {
-            tickets.add(ticketFind);
-            Car car = cars.get(ticketFind);
-            cars.remove(ticketFind);
-//            System.out.println("Машина " + car.getNumberCar() + " выехала с парковки! Был билет: " + ticketFind.getNumberTicket());
-            notify();
-        } else {
-            System.out.println("\nНет машин с номером билета: " + numberTicket);
-        }
+        return null;
     }
 }
