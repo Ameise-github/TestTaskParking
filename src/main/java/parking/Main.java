@@ -70,13 +70,10 @@ public class Main {
                 case "p":
                     try {
                         int valTicketTmp = Integer.parseInt(valueTicket);
-                        if (valTicketTmp > parking.getCountPlace() && parking.countRemainingPlace() == parking.getCountPlace()) {
-                            System.out.println(ANSI_RED + "На парковку смогут заехать " + parking.getCountPlace() + " машин(ы)!" + ANSI_RESET);
-                            valTicketTmp = parking.getCountPlace();
-                        } else if (parking.countRemainingPlace() != 0 && parking.countRemainingPlace() != parking.getCountPlace()) {
+                        if (parking.countRemainingPlace() != 0 && parking.countRemainingPlace() != parking.getCountPlace()) {
                             int t = valTicketTmp - (valTicketTmp - parking.countRemainingPlace());
-                            System.out.println(ANSI_RED + "Машины стоят в очереди, мест может не хватить!" + ANSI_RESET);
-                            valTicketTmp = t;
+                            System.out.println(ANSI_RED + "Машины стоят в очереди!" + ANSI_RESET);
+                            valTicketTmp = t + 1;
                         }
                         commandPN(valTicketTmp, serviceEnter, countSec);
                     } catch (NumberFormatException e) {
@@ -130,8 +127,9 @@ public class Main {
 
     //обработка команды P:N
     private static void commandPN(int valueTicket, ExecutorService serviceEnter, long countSec) {
-        if (parking.countRemainingPlace() != 0) {
-            for (int i = 0; i < valueTicket; i++) {
+
+        for (int i = 0; i < valueTicket; i++) {
+            if (parking.countRemainingPlace() != 0) {
                 serviceEnter.submit(() -> {
                     try {
                         boolean tr = parking.parkingEntrance(getNewCar());
@@ -144,10 +142,12 @@ public class Main {
                         e.printStackTrace();
                     }
                 });
+            } else {
+                System.out.println(ANSI_RED + "Извините,парковка заполнена." + ANSI_RESET);
+                break;
             }
-        } else {
-            System.out.println(ANSI_RED + "Извините,парковка заполнена." + ANSI_RESET);
         }
+
     }
 
     //обработка команды U:N или U:[2,54, .. n]
