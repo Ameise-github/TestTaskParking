@@ -8,6 +8,7 @@ import parking.model.Ticket;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
     /*Цвета для вывода текста*/
@@ -24,6 +25,7 @@ public class Main {
         Scanner sc = new Scanner(System.in);
         ExecutorService serviceEnter = Executors.newFixedThreadPool(2);
         ExecutorService serviceExit = Executors.newFixedThreadPool(2);
+        long countSec;
 
         while (true) {
             System.out.print("Введите количество мест на парковке: ");
@@ -31,8 +33,8 @@ public class Main {
             try {
                 int countPlece = Integer.parseInt(s);
                 System.out.print("Введите время заезда (в сек): ");
-                long countSec = Long.parseLong(sc.nextLine());
-                parking = new Parking(countPlece, countSec);
+                countSec = Long.parseLong(sc.nextLine());
+                parking = new Parking(countPlece);
                 break;
             } catch (Exception e) {
                 System.out.println("Введите число!");
@@ -67,27 +69,36 @@ public class Main {
                     continue;
                 case "p":
                     try {
-                        commandPN(Integer.parseInt(valueTicket),serviceEnter);
+                        int valTicketTmp = Integer.parseInt(valueTicket);
+                        if (valTicketTmp > parking.getCountPlace() && parking.countRemainingPlace() == parking.getCountPlace()) {
+                            System.out.println(ANSI_RED + "На парковку смогут заехать " + parking.getCountPlace() + " машин(ы)!" + ANSI_RESET);
+                            valTicketTmp = parking.getCountPlace();
+                        } else if (parking.countRemainingPlace() != 0 && parking.countRemainingPlace() != parking.getCountPlace()) {
+                            int t = valTicketTmp - (valTicketTmp - parking.countRemainingPlace());
+                            System.out.println(ANSI_RED + "Машины стоят в очереди, мест может не хватить!" + ANSI_RESET);
+                            valTicketTmp = t;
+                        }
+                        commandPN(valTicketTmp, serviceEnter, countSec);
                     } catch (NumberFormatException e) {
-                        System.out.println("Некорректный ввод количества въезжающих машин!");
+                        System.out.println(ANSI_RED + "Некорректный ввод количества въезжающих машин!" + ANSI_RESET);
                     } finally {
                         continue;
                     }
                 case "u":
                     try {
-                        commandUN(valueTicket,serviceExit);
+                        commandUN(valueTicket, serviceExit);
                     } catch (Exception ex) {
-                        System.out.println("Некорректный ввод номера билета машины!");
+                        System.out.println(ANSI_RED + "Некорректный ввод номера билета машины!" + ANSI_RESET);
                     } finally {
                         continue;
                     }
                 case "e":
-                    System.out.println("Программа завершила работу!");
+                    System.out.println(ANSI_RED + "Программа завершила работу!" + ANSI_RESET);
                     serviceEnter.shutdown();
                     System.exit(0);
                     break;
                 default:
-                    System.out.println("Введенная команда не распознана. Попробуйте еще раз!\n");
+                    System.out.println(ANSI_RED + "Введенная команда не распознана. Попробуйте еще раз!\n" + ANSI_RESET);
                     help();
             }
         }
@@ -118,23 +129,29 @@ public class Main {
     }
 
     //обработка команды P:N
-    private static void commandPN(int valueTicket, ExecutorService serviceEnter) {
-        for (int i = 0; i < valueTicket; i++) {
-            if (parking.countRemainingPlace() != 0) {
+    private static void commandPN(int valueTicket, ExecutorService serviceEnter, long countSec) {
+        if (parking.countRemainingPlace() != 0) {
+            for (int i = 0; i < valueTicket; i++) {
                 serviceEnter.submit(() -> {
-                    boolean tr = parking.parkingEntrance(getNewCar());
-                    if (!tr) {
-                        System.out.println("Извините,парковка заполнена.");
+                    try {
+                        boolean tr = parking.parkingEntrance(getNewCar());
+                        if (!tr) {
+                            System.out.println("Извините,парковка заполнена.");
+                        }
+                        TimeUnit.SECONDS.sleep(countSec);
+                    } catch (InterruptedException e) {
+                        System.err.println("Задача прервана. error= ");
+                        e.printStackTrace();
                     }
                 });
-            } else {
-                System.out.println("Извините,парковка заполнена.");
             }
+        } else {
+            System.out.println(ANSI_RED + "Извините,парковка заполнена." + ANSI_RESET);
         }
     }
 
     //обработка команды U:N или U:[2,54, .. n]
-    private static void commandUN(String valueTicket, ExecutorService serviceExit){
+    private static void commandUN(String valueTicket, ExecutorService serviceExit) {
         //если перечисление, то выезжают несколько машин, иначе - одна
         if (valueTicket.contains(",")) {
             String[] v = (valueTicket.substring(1, valueTicket.length() - 1)).split(",");

@@ -4,7 +4,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 public class Parking {
     //кол-во мест
@@ -13,12 +12,9 @@ public class Parking {
     private Hashtable<Ticket, Car> cars;
     //список билетов
     private Vector<Ticket> tickets;
-    //Время въезда машины на парковку
-    private long countSec;
 
-    public Parking(int countPlace, long countSec) {
+    public Parking(int countPlace) {
         this.countPlace = countPlace;
-        this.countSec = countSec;
         cars = new Hashtable<>();
         tickets = new Vector<>();
         for (int i = 0; i < countPlace; i++) {
@@ -33,6 +29,10 @@ public class Parking {
 
     public Vector<Ticket> getTickets() {
         return tickets;
+    }
+
+    public int getCountPlace() {
+        return countPlace;
     }
 
     public void getCarsPrint() {
@@ -61,16 +61,10 @@ public class Parking {
      */
     public synchronized boolean parkingEntrance(Car car) {
         if (countRemainingPlace() != 0) {
-            try {
-                Ticket t = tickets.get(tickets.size() - 1);
-                tickets.remove(t);
-                cars.put(t, car);
-//                System.out.println("Car " + car.getNumberCar() + " enter, get ticket " + t.getNumberTicket());
-                TimeUnit.SECONDS.sleep(countSec);
-            } catch (InterruptedException e) {
-                System.err.println("Задача прервана. error= ");
-                e.printStackTrace();
-            }
+            Ticket t = tickets.get(tickets.size() - 1);
+            tickets.remove(t);
+            cars.put(t, car);
+//            System.out.println("Car " + car.getNumberCar() + " enter, get ticket " + t.getNumberTicket());
             return true;
         } else {
             return false;
