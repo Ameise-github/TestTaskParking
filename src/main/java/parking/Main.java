@@ -6,6 +6,7 @@ import parking.model.Parking;
 import parking.model.Ticket;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
     /*Цвета для вывода текста*/
@@ -17,6 +18,7 @@ public class Main {
     public static final String ANSI_CYAN = "\u001B[36m";
     //endregion
     private static Parking parking;
+    private static long countSec;
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -31,7 +33,7 @@ public class Main {
             try {
                 int countPlece = Integer.parseInt(s);
                 System.out.print("Введите время заезда (в сек): ");
-                long countSec = Long.parseLong(sc.nextLine());
+                countSec = Long.parseLong(sc.nextLine());
                 parking = new Parking(countPlece, countSec);
                 break;
             } catch (Exception e) {
@@ -70,14 +72,21 @@ public class Main {
                         for (int i = 0; i < Integer.parseInt(valueTicket); i++) {
                             if (parking.countRemainingPlace() != 0) {
                                 Thread thread = new Thread(() -> {
+                                    try {
                                     boolean tr = parking.parkingEntrance(getNewCar());
                                     if (!tr) {
                                         System.out.println("Извините,парковка заполнена.");
                                     }
+                                    TimeUnit.SECONDS.sleep(countSec);
+                                } catch (InterruptedException e) {
+                                    System.err.println("Задача прервана. error= ");
+                                    e.printStackTrace();
+                                }
                                 });
                                 thread.start();
                             } else {
                                 System.out.println("Извините,парковка заполнена.");
+                                break;
                             }
                         }
                     } catch (NumberFormatException e) {

@@ -61,15 +61,9 @@ public class Parking {
      */
     public synchronized boolean parkingEntrance(Car car) {
         if (countRemainingPlace() != 0) {
-            try {
-                Ticket t = tickets.get(tickets.size() - 1);
-                tickets.remove(t);
-                cars.put(t, car);
-                TimeUnit.SECONDS.sleep(countSec);
-            } catch (InterruptedException e) {
-                System.err.println("Задача прервана. error= ");
-                e.printStackTrace();
-            }
+            Ticket t = tickets.get(tickets.size() - 1);
+            tickets.remove(t);
+            cars.put(t, car);
             return true;
         } else {
             return false;
