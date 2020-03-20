@@ -8,6 +8,7 @@ import parking.model.Ticket;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
     /*Цвета для вывода текста*/
@@ -88,9 +89,20 @@ public class Main {
                         continue;
                     }
                 case "e":
-                    System.out.println(ANSI_RED + "Программа завершила работу!" + ANSI_RESET);
                     serviceEnter.shutdown();
                     serviceExit.shutdown();
+                    try {
+                        if (!serviceEnter.awaitTermination(20, TimeUnit.SECONDS) || !serviceExit.awaitTermination(20, TimeUnit.SECONDS)){
+                            serviceEnter.shutdownNow();
+                            serviceExit.shutdownNow();
+                            if (!serviceEnter.awaitTermination(20, TimeUnit.SECONDS) || !serviceExit.awaitTermination(20, TimeUnit.SECONDS))
+                                System.err.println("Pool did not terminate");
+                        }
+                    }catch (InterruptedException e){
+                        serviceEnter.shutdownNow();
+                        serviceExit.shutdownNow();
+                    }
+                    System.out.println(ANSI_RED + "Программа завершила работу!" + ANSI_RESET);
                     System.exit(0);
                     break;
                 default:
