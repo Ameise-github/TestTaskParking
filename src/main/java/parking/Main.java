@@ -8,16 +8,12 @@ import parking.model.Ticket;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class Main {
     /*Цвета для вывода текста*/
     //region
     public static final String ANSI_RESET = "\u001B[0m";
     public static final String ANSI_RED = "\u001B[31m";
-    public static final String ANSI_GREEN = "\u001B[32m";
-    public static final String ANSI_YELLOW = "\u001B[33m";
-    public static final String ANSI_CYAN = "\u001B[36m";
     //endregion
     private static Parking parking;
 
@@ -34,7 +30,11 @@ public class Main {
                 int countPlece = Integer.parseInt(s);
                 System.out.print("Введите время заезда (в сек): ");
                 countSec = Long.parseLong(sc.nextLine());
-                parking = new Parking(countPlece);
+                if (countSec > 5 || countSec < 1) {
+                    System.out.println(ANSI_RED + "Разрешенное время заезда от 1 до 5 сек!" + ANSI_RESET);
+                    continue;
+                }
+                parking = new Parking(countPlece, countSec);
                 break;
             } catch (Exception e) {
                 System.out.println("Введите число!");
@@ -71,9 +71,7 @@ public class Main {
                     try {
                         int valTicketTmp = Integer.parseInt(valueTicket);
                         if (parking.countRemainingPlace() != 0 && parking.countRemainingPlace() != parking.getCountPlace()) {
-                            int t = valTicketTmp - (valTicketTmp - parking.countRemainingPlace());
                             System.out.println(ANSI_RED + "Машины стоят в очереди!" + ANSI_RESET);
-                            valTicketTmp = t + 1;
                         }
                         commandPN(valTicketTmp, serviceEnter, countSec);
                     } catch (NumberFormatException e) {
@@ -92,6 +90,7 @@ public class Main {
                 case "e":
                     System.out.println(ANSI_RED + "Программа завершила работу!" + ANSI_RESET);
                     serviceEnter.shutdown();
+                    serviceExit.shutdown();
                     System.exit(0);
                     break;
                 default:
@@ -127,20 +126,10 @@ public class Main {
 
     //обработка команды P:N
     private static void commandPN(int valueTicket, ExecutorService serviceEnter, long countSec) {
-
         for (int i = 0; i < valueTicket; i++) {
             if (parking.countRemainingPlace() != 0) {
                 serviceEnter.submit(() -> {
-                    try {
-                        boolean tr = parking.parkingEntrance(getNewCar());
-                        if (!tr) {
-                            System.out.println("Извините,парковка заполнена.");
-                        }
-                        TimeUnit.SECONDS.sleep(countSec);
-                    } catch (InterruptedException e) {
-                        System.err.println("Задача прервана. error= ");
-                        e.printStackTrace();
-                    }
+                    parking.parkingEntrance(getNewCar());
                 });
             } else {
                 System.out.println(ANSI_RED + "Извините,парковка заполнена." + ANSI_RESET);

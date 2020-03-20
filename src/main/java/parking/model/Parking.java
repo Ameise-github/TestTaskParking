@@ -4,6 +4,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 public class Parking {
     //кол-во мест
@@ -12,9 +13,12 @@ public class Parking {
     private Hashtable<Ticket, Car> cars;
     //список билетов
     private Vector<Ticket> tickets;
+    //Время въезда машины на парковку
+    private long countSec;
 
-    public Parking(int countPlace) {
+    public Parking(int countPlace, long countSec) {
         this.countPlace = countPlace;
+        this.countSec = countSec;
         cars = new Hashtable<>();
         tickets = new Vector<>();
         for (int i = 0; i < countPlace; i++) {
@@ -59,15 +63,17 @@ public class Parking {
     /**
      * Въезд на парковку
      */
-    public synchronized boolean parkingEntrance(Car car) {
+    public synchronized void parkingEntrance(Car car) {
         if (countRemainingPlace() != 0) {
-            Ticket t = tickets.get(tickets.size() - 1);
-            tickets.remove(t);
-            cars.put(t, car);
-//            System.out.println("Car " + car.getNumberCar() + " enter, get ticket " + t.getNumberTicket());
-            return true;
-        } else {
-            return false;
+            try {
+                Ticket t = tickets.get(tickets.size() - 1);
+                tickets.remove(t);
+                TimeUnit.SECONDS.sleep(countSec);
+                cars.put(t, car);
+            } catch (InterruptedException e) {
+                System.err.println("Задача прервана. error= ");
+                e.printStackTrace();
+            }
         }
     }
 
@@ -77,7 +83,6 @@ public class Parking {
     public void parkingExit(Ticket ticket) {
         tickets.add(ticket);
         cars.remove(ticket);
-//        System.out.println("Car exit, the ticket number was " + ticket.getNumberTicket());
     }
 
     /**
