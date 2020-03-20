@@ -6,26 +6,17 @@ import parking.model.Parking;
 import parking.model.Ticket;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 public class Main {
     /*Цвета для вывода текста*/
     //region
     public static final String ANSI_RESET = "\u001B[0m";
     public static final String ANSI_RED = "\u001B[31m";
-    public static final String ANSI_GREEN = "\u001B[32m";
-    public static final String ANSI_YELLOW = "\u001B[33m";
-    public static final String ANSI_CYAN = "\u001B[36m";
     //endregion
     private static Parking parking;
-    private static long countSec;
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-//        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
-//        List<Car> cars = new ArrayList<>();
-
-        Timer timer = new Timer();
 
         while (true) {
             System.out.print("Введите количество мест на парковке: ");
@@ -33,7 +24,11 @@ public class Main {
             try {
                 int countPlece = Integer.parseInt(s);
                 System.out.print("Введите время заезда (в сек): ");
-                countSec = Long.parseLong(sc.nextLine());
+                long countSec = Long.parseLong(sc.nextLine());
+                if (countSec > 5 || countSec < 1) {
+                    System.out.println(ANSI_RED + "Разрешенное время заезда от 1 до 5 сек!" + ANSI_RESET);
+                    continue;
+                }
                 parking = new Parking(countPlece, countSec);
                 break;
             } catch (Exception e) {
@@ -69,26 +64,8 @@ public class Main {
                     continue;
                 case "p":
                     try {
-                        for (int i = 0; i < Integer.parseInt(valueTicket); i++) {
-                            if (parking.countRemainingPlace() != 0) {
-                                Thread thread = new Thread(() -> {
-                                    try {
-                                    boolean tr = parking.parkingEntrance(getNewCar());
-                                    if (!tr) {
-                                        System.out.println("Извините,парковка заполнена.");
-                                    }
-                                    TimeUnit.SECONDS.sleep(countSec);
-                                } catch (InterruptedException e) {
-                                    System.err.println("Задача прервана. error= ");
-                                    e.printStackTrace();
-                                }
-                                });
-                                thread.start();
-                            } else {
-                                System.out.println("Извините,парковка заполнена.");
-                                break;
-                            }
-                        }
+                        int valTicketTmp = Integer.parseInt(valueTicket);
+                        commandPN(valTicketTmp);
                     } catch (NumberFormatException e) {
                         System.out.println("Некорректный ввод количества въезжающих машин!");
                     } finally {
@@ -96,32 +73,7 @@ public class Main {
                     }
                 case "u":
                     try {
-                        //если перечисление, то выезжают несколько машин, иначе - одна
-                        if (valueTicket.contains(",")) {
-                            String[] v = (valueTicket.substring(1, valueTicket.length() - 1)).split(",");
-                            for (String s : v) {
-                                int tmpNumberTicket = Integer.parseInt(s);
-                                //проверить номер билета
-                                Ticket ticketFind = parking.checkedTicket(tmpNumberTicket);
-                                if (ticketFind != null) {
-                                    //создать поток
-                                    Thread thread = new Thread(() -> parking.parkingExit(ticketFind));
-                                    thread.start();
-                                } else {
-                                    System.out.println("\nНет машин с номером билета: " + tmpNumberTicket);
-                                }
-                            }
-                        } else {
-                            int vt = Integer.parseInt(valueTicket);
-                            //проверить номер билета
-                            Ticket ticketFind = parking.checkedTicket(vt);
-                            if (ticketFind != null) {
-                                Thread thread = new Thread(() -> parking.parkingExit(ticketFind));
-                                thread.start();
-                            } else {
-                                System.out.println("\nНет машин с номером билета: " + vt);
-                            }
-                        }
+                        commandUN(valueTicket);
                     } catch (Exception ex) {
                         System.out.println("Некорректный ввод номера билета машины!");
                     } finally {
@@ -160,5 +112,50 @@ public class Main {
         System.out.println(ANSI_RED + "l" + ANSI_RESET + " - СПИСОК МАШИН.");
         System.out.println(ANSI_RED + "c" + ANSI_RESET + " - УЗНАТЬ КОЛИЧЕСТВО ОСТАВШИХСЯ МЕСТ НА ПАРКОВКЕ.");
         System.out.println(ANSI_RED + "e" + ANSI_RESET + "- ВЫХОД ИЗ ПРИЛОЖЕНИЯ");
+    }
+
+    //обработка команды P:N
+    private static void commandPN(int valueTicket) {
+        for (int i = 0; i < valueTicket; i++) {
+            if (parking.countRemainingPlace() != 0) {
+                Thread thread = new Thread(() -> {
+                    parking.parkingEntrance(getNewCar());
+                });
+                thread.start();
+            } else {
+                System.out.println(ANSI_RED + "Извините,парковка заполнена." + ANSI_RESET);
+                break;
+            }
+        }
+    }
+
+    //обработка команды U:N или U:[2,54, .. n]
+    private static void commandUN(String valueTicket) {
+        //если перечисление, то выезжают несколько машин, иначе - одна
+        if (valueTicket.contains(",")) {
+            String[] v = (valueTicket.substring(1, valueTicket.length() - 1)).split(",");
+            for (String s : v) {
+                int tmpNumberTicket = Integer.parseInt(s);
+                //проверить номер билета
+                Ticket ticketFind = parking.checkedTicket(tmpNumberTicket);
+                if (ticketFind != null) {
+                    //создать поток
+                    Thread thread = new Thread(() -> parking.parkingExit(ticketFind));
+                    thread.start();
+                } else {
+                    System.out.println("\nНет машин с номером билета: " + tmpNumberTicket);
+                }
+            }
+        } else {
+            int vt = Integer.parseInt(valueTicket);
+            //проверить номер билета
+            Ticket ticketFind = parking.checkedTicket(vt);
+            if (ticketFind != null) {
+                Thread thread = new Thread(() -> parking.parkingExit(ticketFind));
+                thread.start();
+            } else {
+                System.out.println("\nНет машин с номером билета: " + vt);
+            }
+        }
     }
 }

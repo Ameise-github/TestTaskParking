@@ -59,14 +59,17 @@ public class Parking {
     /**
      * Въезд на парковку
      */
-    public synchronized boolean parkingEntrance(Car car) {
+    public synchronized void parkingEntrance(Car car) {
         if (countRemainingPlace() != 0) {
-            Ticket t = tickets.get(tickets.size() - 1);
-            tickets.remove(t);
-            cars.put(t, car);
-            return true;
-        } else {
-            return false;
+            try {
+                Ticket t = tickets.get(tickets.size() - 1);
+                tickets.remove(t);
+                TimeUnit.SECONDS.sleep(countSec);
+                cars.put(t, car);
+            } catch (InterruptedException e) {
+                System.err.println("Задача прервана. error= ");
+                e.printStackTrace();
+            }
         }
     }
 
