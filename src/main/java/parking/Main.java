@@ -101,6 +101,7 @@ public class Main {
                     }catch (InterruptedException e){
                         serviceEnter.shutdownNow();
                         serviceExit.shutdownNow();
+                        Thread.currentThread().interrupt();
                     }
                     System.out.println(ANSI_RED + "Программа завершила работу!" + ANSI_RESET);
                     System.exit(0);

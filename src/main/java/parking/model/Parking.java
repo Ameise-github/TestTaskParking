@@ -71,8 +71,9 @@ public class Parking {
                 TimeUnit.SECONDS.sleep(countSec);
                 cars.put(t, car);
             } catch (InterruptedException e) {
-                System.err.println("Задача прервана. error= ");
+                System.err.print("Задача прервана. error= ");
                 e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
         }
     }
